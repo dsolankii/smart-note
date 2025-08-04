@@ -1,4 +1,8 @@
-@import "tailwindcss";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import "react-quill/dist/quill.snow.css";
 
 :root {
   --background: #ffffff;
@@ -23,4 +27,48 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+}
+
+.clean-quill .ql-toolbar {
+  display: flex !important;
+  justify-content: center; 
+  gap: 1.2rem;               
+  padding: 0 0 0.5rem !important;
+  border-top: none !important;
+  border-left: none !important;
+  border-right: none !important;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08) !important;
+  position: relative;
+}
+
+.dark .clean-quill .ql-toolbar {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+.clean-quill .ql-toolbar .ql-header {
+  display: none !important;
+}
+
+.dark .clean-quill .ql-stroke {
+  stroke: #e5e7eb !important; 
+}
+.dark .clean-quill .ql-fill {
+  fill: #e5e7eb !important;
+}
+.dark .clean-quill .ql-picker-label {
+    color: #e5e7eb !important; 
+}
+
+.clean-quill .ql-container {
+    border: none !important;
+}
+
+.clean-quill .ql-editor {
+    padding-top: 0.8rem !important;
+}
+
+.clean-quill .ql-editor.ql-blank::before {
+  font-style: normal !important;
+  color: hsl(var(--muted-foreground)) !important;
+  opacity: 0.7;
 }
