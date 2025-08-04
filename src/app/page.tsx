@@ -23,7 +23,7 @@ export default function Home() {
   const [editorText, setEditorText] = useState('');
   const [notes, setNotes] = useState<Note[]>([]);
   const [busyIdx, setBusyIdx] = useState<string | null>(null); 
-  
+
   /* ───── helper: add new note ───── */
   function addNote() {
     if (!editorText.trim()) return;
@@ -123,7 +123,10 @@ if (!user) {
         </header>
 
         {/* prettier form below */}
-        <AuthForm login={login} signup={signup} />
+        <AuthForm
+          login={async (e, p) => { await login(e, p); }}
+          signup={async (e, p) => { await signup(e, p); }}
+        />
 
         <footer className="text-center text-xs text-gray-500 dark:text-gray-400">
           New here? Enter any email &amp; password and an account is created automatically.
@@ -138,8 +141,6 @@ if (!user) {
     <div className="flex min-h-screen items-center justify-center p-4">
       <div className="w-full max-w-4xl space-y-6">
         {/* header */}
-        <Header dark={dark} toggleDark={() => setDark(!dark)} logout={logout} />
-
         {/* glassy card for editor */}
 {/* ───────── editor card ───────── */}
 <section
