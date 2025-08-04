@@ -1,3 +1,4 @@
+
 # Smart Note-Taking App 📝✨  
 
 An AI-augmented notebook where you can **write free-form text, press a button to clean it up, generate a catchy title, and stash it safely in the cloud.**  
@@ -60,28 +61,6 @@ FIREBASE_CLIENT_EMAIL
 FIREBASE_PRIVATE_KEY
 ```
 
----
-
-## 🌐 1-click deploy on Vercel
-
-1. **Import** this GitHub repo in Vercel.
-2. Paste each env var into **Project → Settings → Environment Variables**.
-3. Click **Deploy** — your app is live in seconds.
-
----
-
-## 🤔 Why I built this
-
-I love jotting down messy ideas and letting an LLM polish them.
-This starter kit gives you a full-featured, AI-powered notebook you can brand & extend.
-
----
-
-## 🛣 Roadmap
-
-* Tags & full-text search (Algolia / Firestore composite).
-* Offline-first PWA mode.
-* RAG: embed past notes for richer AI context when refining.
 
 ---
 
@@ -93,11 +72,4 @@ This starter kit gives you a full-featured, AI-powered notebook you can brand & 
 4. Push (`git push origin feature/…`)
 5. Open a Pull Request
 
----
-
-## 📄 License
-
-MIT © 2025 Devesh Solanki
-
-```
 ```
