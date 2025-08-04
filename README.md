@@ -2,7 +2,7 @@
 # Smart Note-Taking App 📝✨  
 
 An AI-augmented notebook where you can **write free-form text, press a button to clean it up, generate a catchy title, and stash it safely in the cloud.**  
-Built on Next.js 14, LangChain + OpenAI, and Firebase — served hot from Vercel.
+Built on Next.js 14, LangChain + OpenAI, and Firebase served hot from Vercel.
 
 ---
 
