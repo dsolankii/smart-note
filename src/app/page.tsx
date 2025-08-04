@@ -4,6 +4,7 @@ import { useState, KeyboardEvent } from 'react';
 import useDarkMode from '@/hooks/useDarkMode';
 import { useAuth } from '@/hooks/useAuth';
 import NoteEditor from '@/components/NoteEditor';
+import useUserNotes from '@/hooks/useUserNotes';
 
 
 type Note = {
@@ -17,6 +18,7 @@ type Note = {
 export default function Home() {
   /* ---------- auth & theme ---------- */
   const { user, loading: authLoading, login, signup, logout } = useAuth();
+  const cloudNotes = useUserNotes(user ? user.uid : null);
   const [dark, setDark] = useDarkMode();
 
   /* ---------- notebook state ---------- */
@@ -30,6 +32,7 @@ export default function Home() {
     const id = Date.now().toString();
     setNotes((n) => [...n, { id, content: editorText.trim() }]);
     setEditorText('');
+    setSelectedCloud(null);
   }
 
   function acceptRefined(idx: number) {
@@ -56,12 +59,16 @@ function acceptTitle(idx: number) {
   );
 }
 
+const [selectedCloud, setSelectedCloud] = useState<string | null>(null);
+
   /* ───── per-note helpers ───── */
   async function refineNote(idx: number) {
     setBusyIdx(notes[idx].id);
     const res = await fetch('/api/refineNote', {
       method: 'POST',
-      body: JSON.stringify({ note: notes[idx].content }),
+      body: JSON.stringify({ note: notes[idx].content,
+  heading: notes[idx].heading ?? null,
+  createdAt: Date.now(), }),
     });
     const { refined } = await res.json();
     setNotes((n) =>
@@ -74,7 +81,9 @@ function acceptTitle(idx: number) {
     setBusyIdx(notes[idx].id);
     const res = await fetch('/api/generateTitle', {
       method: 'POST',
-      body: JSON.stringify({ note: notes[idx].content }),
+      body: JSON.stringify({ note: notes[idx].content,
+  heading: notes[idx].heading ?? null,
+  createdAt: Date.now(), }),
     });
     const { title } = await res.json();
     setNotes((n) =>
@@ -83,19 +92,26 @@ function acceptTitle(idx: number) {
     setBusyIdx(null);
   }
 
-  async function saveNote(idx: number) {
-    if (!user) return alert('Please log in first.');
-    setBusyIdx(notes[idx].id);
+async function saveNote(idx: number) {
+  if (!user) return alert('Please log in first.');
+  setBusyIdx(notes[idx].id);
 
-    const token = await user.getIdToken();
-    const res = await fetch('/api/saveNote', {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${token}` },
-      body: JSON.stringify({ note: notes[idx].content }),
-    });
-    alert(res.ok ? 'Note saved ✔️' : 'Save failed');
-    setBusyIdx(null);
-  }
+  const token = await user.getIdToken();
+
+  await fetch('/api/saveNote', {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}` },
+    body: JSON.stringify({
+      note: notes[idx].content,
+      heading: notes[idx].heading ?? null,
+      createdAt: Date.now(),      
+    }),
+  });
+
+  alert('Note saved ✔️');
+  setBusyIdx(null);
+}
+
 
   async function deleteNote(idx: number) {
   setNotes((n) => n.filter((_, i) => i !== idx));
@@ -136,134 +152,164 @@ if (!user) {
   );
 }
 
-  /* ───── UI ───── */
-  return (
-    <div className="flex min-h-screen items-center justify-center p-4">
-      <div className="w-full max-w-4xl space-y-6">
-        {/* header */}
-        {/* glassy card for editor */}
-{/* ───────── editor card ───────── */}
-<section
-  className="rounded-3xl bg-gradient-to-br from-white/70 to-white/40
-             dark:from-white/10 dark:to-white/5
-             p-6 shadow-xl ring-1 ring-black/5 dark:ring-white/10
-             backdrop-blur"
+/* ───── UI (logged-in) ───── */
+return (
+  <div className="flex min-h-screen">
+    {/* ── left sidebar with saved notes ── */}
+    <aside className="w-64 shrink-0 border-r border-white/10 p-6
+                      bg-white/5 backdrop-blur-md overflow-y-auto">
+      <h3 className="mb-4 text-lg font-semibold">Saved notes</h3>
+
+      {cloudNotes.length === 0 ? (
+        <p className="text-sm text-gray-500 dark:text-gray-400">None yet.</p>
+      ) : (
+        <ul className="space-y-3 text-sm">
+          {cloudNotes.map((n, i) => (
+            <li
+  key={n.id}
+  className={`truncate cursor-pointer px-2 py-1 rounded
+              ${selectedCloud === n.id ? 'bg-blue-600 text-white' : 'hover:bg-white/10'}`}
+  onClick={() => {
+    setSelectedCloud(n.id);      // highlight it
+    setEditorText(n.content);    // load into editor
+  }}
 >
-  {/* editor with Ctrl+Enter listener */}
-  <div
-    className="note-editor"
-    onKeyDown={(e: KeyboardEvent) => {
-      if (e.key === 'Enter' && e.ctrlKey) {
-        e.preventDefault();
-        addNote();
-      }
-    }}
-  >
-    <NoteEditor value={editorText} onChange={setEditorText} />
-  </div>
-
-  {/* add-note button */}
-  <div className="mt-6 flex justify-end">
-    <Button color="blue" onClick={addNote}>
-      Add&nbsp;Note&nbsp;
-    </Button>
-  </div>
-</section>
-
-
-        {/* numbered list of notes */}
-        {notes.length > 0 && (
-          <ol className="space-y-6">
-            {notes.map((note, idx) => (
-<li
-  key={note.id}
-  className="rounded-2xl bg-black/5 dark:bg-white/10 backdrop-blur
-             ring-1 ring-black/5 dark:ring-white/10 p-6 shadow-lg"
->
-  {/* floating delete icon */}
-  <button
-    onClick={() => deleteNote(idx)}
-    className="absolute top-2 right-2 text-lg leading-none
-               rounded-full px-2 py-1 hover:bg-rose-600 hover:text-white
-               transition"
-    title="Delete note"
-  >
-    🗑️
-  </button>
-
-  {/* headline */}
-  <h2 className="text-lg font-semibold mb-4">
-    {note.heading ?? `Note ${idx + 1}`}
-  </h2>
-
-  {/* accepted or original content */}
-  <div
-    className="prose dark:prose-invert leading-relaxed"
-    dangerouslySetInnerHTML={{ __html: note.content }}
-  />
-
-  {/* refined draft with Accept / Decline */}
-  {note.refined && (
-    <div className="mt-6 space-y-3">
-      <div
-        className="prose dark:prose-invert rounded-lg bg-white/40 p-4
-                   dark:bg-white/10"
-        dangerouslySetInnerHTML={{ __html: note.refined }}
-      />
-      <div className="flex gap-3">
-        <ActionBtn color="emerald" onClick={() => acceptRefined(idx)}>
-          Accept
-        </ActionBtn>
-        <ActionBtn color="rose" onClick={() => declineRefined(idx)}>
-          Decline
-        </ActionBtn>
-      </div>
-    </div>
-  )}
-
-  {/* title draft with Accept */}
-  {note.title && (
-    <div className="mt-4 flex items-center gap-3">
-      <p className="flex-1 rounded-lg bg-slate-200 px-3 py-2 dark:bg-slate-700">
-        <strong>Title:</strong> {note.title}
-      </p>
-      <ActionBtn color="emerald" onClick={() => acceptTitle(idx)}>
-        Accept
-      </ActionBtn>
-    </div>
-  )}
-
-  {/* footer action row */}
-  <div className="mt-6 flex flex-wrap gap-3 justify-end">
-    <ActionBtn
-      color="emerald"
-      busy={busyIdx === note.id}
-      onClick={() => refineNote(idx)}
-    >
-      Refine
-    </ActionBtn>
-    <ActionBtn
-      color="purple"
-      busy={busyIdx === note.id}
-      onClick={() => titleNote(idx)}
-    >
-      Title
-    </ActionBtn>
-    <ActionBtn
-      color="blue"
-      busy={busyIdx === note.id}
-      onClick={() => saveNote(idx)}
-    >
-      Save
-    </ActionBtn>
-  </div>
+  {n.heading ?? `Note ${cloudNotes.length - i}`}
 </li>
-            ))}
-          </ol>
-        )}
-      </div>
-    </div>
-  );
+
+          ))}
+        </ul>
+      )}
+    </aside>
+
+    {/* ── main workspace ── */}
+    <main className="flex flex-1 flex-col">
+      {/* top navbar */}
+
+      {/* center editor + local notes */}
+      <section className="flex flex-1 items-center justify-center p-4">
+        <div className="w-full max-w-4xl space-y-6">
+          {/* ───────── editor card ───────── */}
+          <section
+            className="rounded-3xl bg-gradient-to-br from-white/70 to-white/40
+                       dark:from-white/10 dark:to-white/5
+                       p-6 shadow-xl ring-1 ring-black/5 dark:ring-white/10
+                       backdrop-blur"
+          >
+            <div
+              onKeyDown={(e: KeyboardEvent) => {
+                if (e.key === 'Enter' && e.ctrlKey) {
+                  e.preventDefault();
+                  addNote();
+                }
+              }}
+            >
+              <NoteEditor value={editorText} onChange={setEditorText} />
+            </div>
+
+            <div className="mt-6 flex justify-end">
+              <Button color="blue" onClick={addNote}>
+                Add&nbsp;Note&nbsp;
+              </Button>
+            </div>
+          </section>
+
+          {/* ───────── numbered list ───────── */}
+          {notes.length > 0 && (
+            <ol className="space-y-6">
+              {notes.map((note, idx) => (
+                <li
+                  key={note.id}
+                  className="relative rounded-2xl bg-black/5 dark:bg-white/10
+                             backdrop-blur ring-1 ring-black/5 dark:ring-white/10
+                             p-6 shadow-lg"
+                >
+                  {/* delete icon */}
+                  <button
+                    onClick={() => deleteNote(idx)}
+                    className="absolute top-2 right-2 text-lg leading-none
+                               rounded-full px-2 py-1 hover:bg-rose-600 hover:text-white
+                               transition"
+                    title="Delete note"
+                  >
+                    X
+                  </button>
+
+                  {/* headline */}
+                  <h2 className="mb-4 text-lg font-semibold">
+                    {note.heading ?? `Note ${idx + 1}`}
+                  </h2>
+
+                  {/* main content */}
+                  <div
+                    className="prose dark:prose-invert leading-relaxed"
+                    dangerouslySetInnerHTML={{ __html: note.content }}
+                  />
+
+                  {/* refined draft */}
+                  {note.refined && (
+                    <div className="mt-6 space-y-3">
+                      <div
+                        className="prose dark:prose-invert rounded-lg bg-white/40 p-4
+                                   dark:bg-white/10"
+                        dangerouslySetInnerHTML={{ __html: note.refined }}
+                      />
+                      <div className="flex gap-3">
+                        <ActionBtn color="emerald" onClick={() => acceptRefined(idx)}>
+                          Accept
+                        </ActionBtn>
+                        <ActionBtn color="rose" onClick={() => declineRefined(idx)}>
+                          Decline
+                        </ActionBtn>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* title draft */}
+                  {note.title && (
+                    <div className="mt-4 flex items-center gap-3">
+                      <p className="flex-1 rounded-lg bg-slate-200 px-3 py-2 dark:bg-slate-700">
+                        <strong>Title:</strong> {note.title}
+                      </p>
+                      <ActionBtn color="emerald" onClick={() => acceptTitle(idx)}>
+                        Accept
+                      </ActionBtn>
+                    </div>
+                  )}
+
+                  {/* footer actions */}
+                  <div className="mt-6 flex flex-wrap justify-end gap-3">
+                    <ActionBtn
+                      color="emerald"
+                      busy={busyIdx === note.id}
+                      onClick={() => refineNote(idx)}
+                    >
+                      Refine
+                    </ActionBtn>
+                    <ActionBtn
+                      color="purple"
+                      busy={busyIdx === note.id}
+                      onClick={() => titleNote(idx)}
+                    >
+                      Title
+                    </ActionBtn>
+                    <ActionBtn
+                      color="blue"
+                      busy={busyIdx === note.id}
+                      onClick={() => saveNote(idx)}
+                    >
+                      Save
+                    </ActionBtn>
+                  </div>
+                </li>
+              ))}
+            </ol>
+          )}
+        </div>
+      </section>
+    </main>
+  </div>
+);
 }
 
 /* ---------- tiny components ---------- */
