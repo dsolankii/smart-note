@@ -8,17 +8,18 @@ Built on Next.js 14, LangChain + OpenAI, and Firebase — served hot from Vercel
 
 ## 🎁 What you get
 
-| ✨  | Feature |
-|----|---------|
-| **Rich-text editor** – bold, lists, code, and more (React Quill). |
-| **Refine** – OpenAI rewrites your note for clarity while preserving intent. |
-| **Generate Title** – instant headline (max 12 words). |
-| **Accept / Decline** – keep or discard AI drafts with one click. |
-| **Dark-mode toggle** – a11y-friendly, remembers your choice. |
-| **Per-note delete** – 🗑️ icon in the corner, auto-renumbers list. |
-| **Email/password auth** – powered by Firebase; new users auto-register. |
-| **Firestore persistence** – notes saved to your private collection. |
-| Responsive glass UI – built entirely with Tailwind CSS. |
+| ✨ Feature | Description |
+|-----------|-------------|
+| **Rich-text editor** | Bold, lists, code, and more (React Quill). |
+| **Refine** | OpenAI rewrites your note for clarity while preserving intent. |
+| **Generate Title** | Instant headline (max 12 words). |
+| **Accept / Decline** | Keep or discard AI drafts with one click. |
+| **Dark-mode toggle** | A11y-friendly, remembers your choice. |
+| **Per-note delete** | 🗑️ Icon in the corner, auto-renumbers list. |
+| **Email/password auth** | Powered by Firebase; new users auto-register. |
+| **Firestore persistence** | Notes saved to your private collection. |
+| **Responsive glass UI** | Built entirely with Tailwind CSS. |
+
 
 ---
 
